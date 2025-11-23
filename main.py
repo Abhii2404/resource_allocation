@@ -73,6 +73,67 @@ def main():
         'only genetic': baselines.run_mocanu()
     }
 
+    # Compute and print a composite normalized "Training Score" for each model
+    def compute_and_print_model_scores(metrics_dict):
+        """Compute a composite score (0..1) for each model based on averaged metrics.
+
+        Uses avg utility (higher better), avg response (lower better), avg cost (lower better),
+        avg execution time (lower better). Each metric is normalized across models and
+        combined with preset weights.
+        """
+        names = list(metrics_dict.keys())
+        agg = {}
+        eps = 1e-9
+        for name in names:
+            data = metrics_dict[name]
+            util = float(np.mean(data.get('util', [0]))) if len(data.get('util', []))>0 else 0.0
+            resp = float(np.mean(data.get('resp', [0]))) if len(data.get('resp', []))>0 else 0.0
+            cost = float(np.mean(data.get('cost', [0]))) if len(data.get('cost', []))>0 else 0.0
+            time_avg = float(np.mean(data.get('time', [0]))) if len(data.get('time', []))>0 else 0.0
+            agg[name] = {'util': util, 'resp': resp, 'cost': cost, 'time': time_avg}
+
+        # Build arrays for normalization
+        utils = np.array([agg[n]['util'] for n in names], dtype=float)
+        resps = np.array([agg[n]['resp'] for n in names], dtype=float)
+        costs = np.array([agg[n]['cost'] for n in names], dtype=float)
+        times = np.array([agg[n]['time'] for n in names], dtype=float)
+
+        def normalize(arr, invert=False):
+            mn, mx = np.nanmin(arr), np.nanmax(arr)
+            if np.isclose(mx, mn):
+                # all equal -> neutral score 0.5
+                return np.ones_like(arr) * 0.5
+            norm = (arr - mn) / (mx - mn + eps)
+            return 1 - norm if invert else norm
+
+        # utility: higher better (no invert)
+        u_norm = normalize(utils, invert=False)
+        # response, cost, time: lower better -> invert=True
+        r_norm = normalize(resps, invert=True)
+        c_norm = normalize(costs, invert=True)
+        t_norm = normalize(times, invert=True)
+
+        # weights (tunable)
+        w_util, w_resp, w_cost, w_time = 0.4, 0.2, 0.3, 0.1
+
+        scores = {}
+        for i, name in enumerate(names):
+            score = (w_util * u_norm[i]) + (w_resp * r_norm[i]) + (w_cost * c_norm[i]) + (w_time * t_norm[i])
+            scores[name] = float(score)
+
+        # Print scores in a clean, aligned table sorted by score (higher is better)
+        print("\nRelative Performance Scores (higher is better)")
+        print("+----------------------+---------+---------+")
+        print(f"| {'Model':<20} | {'Score':>6} | {'Percent':>7} |")
+        print("+----------------------+---------+---------+")
+        # sort by score desc
+        sorted_items = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+        for rank, (name, sc) in enumerate(sorted_items, start=1):
+            print(f"| {name:<20} | {sc:6.4f} | {sc*100:6.2f}% |")
+        print("+----------------------+---------+---------+\n")
+
+    compute_and_print_model_scores(metrics)
+
     
     # 7. Generate Table 3 Comparison (Printing to Console)
     print("\n--- TABLE III: SUMMARY OF QUALITATIVE COMPARISON ---")
