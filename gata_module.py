@@ -12,6 +12,7 @@ class GATA:
     def fitness_function(self, chromosome):
         """
         Eq (7): Fitness = Sum(RT + MR)
+        response time + total cost = fitness value
         Chromosome index = task, value = assigned resource ID
         """
         total_rt = 0

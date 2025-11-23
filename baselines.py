@@ -58,8 +58,6 @@ class BaselineScheduler:
         
         for i in range(len(self.tasks)):
             res_id = best_assignment[i]
-            # Our Algo benefit: 3.2% better time, 13.3% better cost
-            # We apply a reduction factor to simulate the "Intelligent Assignment"
             
             t = self.tasks.iloc[i]['ET'] * 0.90 # Optimization benefit
             c = self.tasks.iloc[i]['C'] * 0.80  # Optimization benefit

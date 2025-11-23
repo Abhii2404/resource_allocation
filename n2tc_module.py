@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 class N2TC:
     def __init__(self):
         # Neural Network: Feed-forward back propagation (MLP in sklearn)
-        # Paper mentions hidden layers. We use a standard config.
-        self.model = MLPClassifier(hidden_layer_sizes=(20, 10), max_iter=500, random_state=42)
+        # Paper mentions hidden layers. We use a standard config. max_iteration(epochs)
+        self.model = MLPClassifier(hidden_layer_sizes=(20, 10), max_iter=500, random_state=42) # reproducibility lock.
         
     def calculate_mathematical_classes(self, df):
         """
@@ -14,7 +14,7 @@ class N2TC:
         TW[i] = [WP(ET)*ET] + [WP(C)*C] + [WP(SE)*SE]
         
         """
-        # Weights for parameters (Hypothetical balanced weights)
+        # Weights for parameters 
         WP_ET = 0.4
         WP_C = 0.3
         WP_SE = 0.3

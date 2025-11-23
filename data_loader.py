@@ -3,7 +3,6 @@ import ast
 import numpy as np
 
 def parse_resource_string(res_str):
-    """Parses strings like "{'cpus': 0.02, 'memory': 0.01}" into a dict."""
     try:
         if pd.isna(res_str):
             return {'cpus': 0.0, 'memory': 0.0}

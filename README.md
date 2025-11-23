@@ -4,6 +4,10 @@ A small research/demo repository that implements a hybrid cloud scheduling appro
 
 ---
 
+
+- dataset   https://www.kaggle.com/datasets/derrickmwiti/google-2019-cluster-sample
+- download it and Ensure 'borg_traces_data.csv' is in the same folder 
+
 ## Contents
 
 - `main.py` — Main driver: loads data, trains N2TC, runs GATA, runs baseline comparisons, saves metrics and generates plots.
@@ -18,6 +22,8 @@ A small research/demo repository that implements a hybrid cloud scheduling appro
 
 ---
 
+
+<!--  dataset contains 405894 entries -->
 ## Quick Start (Windows PowerShell)
 
 1. Create / activate the Python environment you want to use (recommended: 3.10+).
