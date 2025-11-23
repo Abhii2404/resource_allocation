@@ -7,16 +7,26 @@ from baselines import BaselineScheduler
 from visualizer import plot_results
 import json
 
-def save_metrics(metrics_dict, filename='results_data.json'):
-    """Saves the calculated metrics to a JSON file."""
+def save_metrics(metrics_dict, extra_info=None, filename='results_data.json'):
+    """Saves the calculated metrics and optional extra info to a JSON file.
+
+    `extra_info` can be any JSON-serializable object (e.g., relative performance
+    scores or an ASCII table string) and will be saved alongside the metrics.
+    """
     # Convert numpy arrays/data structures if necessary before saving
     serializable_metrics = {}
     for algo, data in metrics_dict.items():
         serializable_metrics[algo] = {k: [list(v) if isinstance(v, np.ndarray) else v for v in values]
                                       for k, values in data.items()}
-        
+
+    out = {
+        'metrics': serializable_metrics
+    }
+    if extra_info is not None:
+        out['extra'] = extra_info
+
     with open(filename, 'w') as f:
-        json.dump(serializable_metrics, f, indent=4)
+        json.dump(out, f, indent=4)
     print(f"Metrics saved to {filename}")
 
 def main():
@@ -121,18 +131,25 @@ def main():
             score = (w_util * u_norm[i]) + (w_resp * r_norm[i]) + (w_cost * c_norm[i]) + (w_time * t_norm[i])
             scores[name] = float(score)
 
-        # Print scores in a clean, aligned table sorted by score (higher is better)
-        print("\nRelative Performance Scores (higher is better)")
-        print("+----------------------+---------+---------+")
-        print(f"| {'Model':<20} | {'Score':>6} | {'Percent':>7} |")
-        print("+----------------------+---------+---------+")
+        # Prepare a clean, aligned table sorted by score (higher is better)
+        header_lines = []
+        header_lines.append("Relative Performance Scores (higher is better)")
+        header_lines.append("+----------------------+---------+---------+")
+        header_lines.append(f"| {'Model':<20} | {'Score':>6} | {'Percent':>7} |")
+        header_lines.append("+----------------------+---------+---------+")
         # sort by score desc
         sorted_items = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
         for rank, (name, sc) in enumerate(sorted_items, start=1):
-            print(f"| {name:<20} | {sc:6.4f} | {sc*100:6.2f}% |")
-        print("+----------------------+---------+---------+\n")
+            header_lines.append(f"| {name:<20} | {sc:6.4f} | {sc*100:6.2f}% |")
+        header_lines.append("+----------------------+---------+---------+\n")
 
-    compute_and_print_model_scores(metrics)
+        table_str = "\n".join(header_lines)
+        print(table_str)
+
+        # Return both structured scores and the ASCII table string for saving/display
+        return scores, table_str
+
+    scores, table_str = compute_and_print_model_scores(metrics)
 
     
     # 7. Generate Table 3 Comparison (Printing to Console)
@@ -158,7 +175,12 @@ def main():
     print("Note: Proposed Approach shows lower costs and better utility as expected.")
     
     # 8. Visualize
-    save_metrics(metrics)
+    # Save metrics along with relative performance scores/table for the dashboard
+    extra_info = {
+        'relative_performance': scores,
+        'relative_performance_table': table_str
+    }
+    save_metrics(metrics, extra_info=extra_info)
     print("[6] Generating Graphs...")
     plot_results(metrics)
     print("Done.")

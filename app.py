@@ -12,6 +12,9 @@ def load_metrics(filename='results_data.json'):
     try:
         with open(filename, 'r') as f:
             data = json.load(f)
+        # Support both old format (metrics at top-level) and new format with 'metrics' key
+        if isinstance(data, dict) and 'metrics' in data:
+            data = data['metrics']
         
         # Convert list data back into a format suitable for plotting (e.g., Series)
         processed_data = {}
@@ -59,6 +62,22 @@ def app():
     metrics_data = load_metrics()
     if metrics_data is None:
         return
+
+    # Try to load extra info (relative performance table) if present
+    try:
+        with open('results_data.json', 'r') as f:
+            raw = json.load(f)
+        extra = raw.get('extra', {}) if isinstance(raw, dict) else {}
+        rel_table = extra.get('relative_performance_table') if isinstance(extra, dict) else None
+        rel_scores = extra.get('relative_performance') if isinstance(extra, dict) else None
+    except Exception:
+        rel_table = None
+        rel_scores = None
+
+    # If available, show the relative performance ASCII table and a compact DataFrame
+    if rel_table:
+        st.subheader("Relative Performance Scores")
+        st.code(rel_table)
 
     # Convert the dictionary of results into a single DataFrame for easier manipulation
     df_list = []
